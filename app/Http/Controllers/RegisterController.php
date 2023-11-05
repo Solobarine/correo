@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\Registered;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class RegisterController extends Controller
 {
     //
     public function index()
     {
+        if (auth()->user()) {
+            return redirect('posts');
+        }
+
         return view('auth.register');
     }
 
@@ -24,13 +30,13 @@ class RegisterController extends Controller
         ]);
 
         // Check If User Exists
-        $user = User::first('email', $request->email);
+        $user = User::where('email', $request->email)->first();
         if ($user) {
             return back()->with('status', 'User Already Exists');
         };
 
         // Create User
-        User::create([
+        $newUser = User::create([
             'name' => $request->name,
             'username' => $request->username,
             'email' => $request->email,
@@ -38,7 +44,9 @@ class RegisterController extends Controller
         ]);
 
         auth()->attempt($request->only(['email', 'password']));
+        
+        Mail::to($newUser)->send(new Registered($newUser));
 
-        return redirect()->route('dashboard');
+        return redirect()->route('posts');
     }
 }
