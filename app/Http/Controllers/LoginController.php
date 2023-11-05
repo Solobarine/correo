@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\LoggedIn;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class LoginController extends Controller
 {
     //
     public function index()
     {
+        if (auth()->user()) {
+            return redirect('posts');
+        }
+
         return view('auth.login');
     }
 
@@ -19,8 +25,9 @@ class LoginController extends Controller
             'password' => 'required'
         ]);
 
-        if (auth()->attempt($request->only(['email', 'password']))) {
-            return redirect()->route('dashboard');  
+        if (auth()->attempt($request->only(['email', 'password']), ($request->remember) ? true : false)) {
+            Mail::to(auth()->user())->send(new LoggedIn(auth()->user()));
+            return redirect()->route('posts');  
         }
 
         return back()->with('status', 'Invalid Email or Password');
