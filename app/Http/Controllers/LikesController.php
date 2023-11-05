@@ -23,7 +23,7 @@ class LikesController extends Controller
             'user_id' => $request->user()->id
         ]);
 
-        if(!$post->likes->onlyTrashed()->where('user_id', $request->user()->id)->count()) {
+        if(!$post->likes()->onlyTrashed()->where('user_id', $request->user()->id)->count()) {
             Mail::to($post->user)->send(new PostLike($post, $post->user));
         }
 
